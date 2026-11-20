@@ -1,0 +1,219 @@
+generator client{
+    provider = "prisma-client-js"
+    output ="../generated/prisma"
+    moduleFormat = "esm"    
+}
+
+datasource db{
+    provider = "mysql"
+}
+
+model User{
+    userID          Int      @id @default(autoincrement())
+    username        String
+    email           String   @unique
+    password        String  
+    fullname        String  
+    phone           String?
+    profileImg      String?
+    role            String  @default("user")
+
+    personalities   Personality[]
+    analyses        AI_Analysis[]
+    healthProfile   Health_Profile?
+    meals           Meal[]
+    exercises       Exercise[]
+    selfcares       Selfcare[]
+    seller          Seller?
+    admin           Admin?
+    carts           Cart[]
+    orders          Orders[]
+    notifications   Notification[]
+    reviews         Review[]
+}
+
+model Personality{
+    personalityID   Int     @id @default(autoincrement())
+    userID          Int     
+    personalityType String?
+    strengths       String? @db.Text
+    weaknesses      String? @db.Text
+    recommendation  String? @db.Text
+
+    user User @relation(fields: [userID], references: [userID])
+}
+
+model AI_Analysis {
+    analysisID      Int     @id @default(autoincrement())
+    userID          Int     
+    analysisType    String
+    imageUrl        String?
+    result          String? @db.Text
+    createdAt       DateTime @default(now())
+
+    user User @relation(fields: [userID],references: [userID])
+}
+
+model Health_Profile {
+    healthID        Int     @id @default(autoincrement())
+    userID          Int     @unique
+    age             Int?
+    height          Float?
+    activityLevel   String?
+
+    user User @relation(fields: [userID], references: [userID])
+}
+
+model Meal {
+    mealID          Int         @id @default(autoincrement())
+    userID          Int
+    mealName        String
+    calories        Float
+    mealDate        DateTime    @default(now())
+
+    user User @relation(fields: [userID], references: [userID])
+}
+
+model Exercise {
+    exercisesID     Int     @id @default(autoincrement())
+    userID          Int
+    exerciseName    String
+    duration        Int
+    exerciseDate    DateTime    @default(now())
+
+    user User @relation(fields: [userID], references: [userID])
+}
+
+model Selfcare {
+    SelfcareID      Int     @id @default(autoincrement())
+    userID          Int
+    activity        String
+    status          String
+
+    user User @relation(fields: [userID], references: [userID])
+}
+
+model Seller {
+    sellerID        Int     @id @default(autoincrement())
+    userID          Int     @unique
+    shopName        String
+    description     String?
+    createdAt       DateTime @default(now())
+
+    user User @relation(fields: [userID], references: [userID])
+    products Product[]
+}
+
+model Category {
+    categoryID      Int     @id @default(autoincrement())
+    categoryName    String
+    description     String?
+
+    products Product[]
+}
+
+model Product {
+    productID       Int     @id @default(autoincrement())
+    sellerID        Int
+    categoryID      Int
+    productName     String
+    description     String?
+    price           Decimal @db.Decimal(10, 2)
+    stock           Int
+    imageUrl        String?
+    createdAt       DateTime @default(now())
+
+    seller          Seller @relation(fields: [sellerID], references: [sellerID])
+    category        Category @relation(fields: [categoryID], references: [categoryID])
+    cartDetails     CartDetail[]
+    orderDetails    OrderDetail[]
+    reviews         Review[]
+}
+
+model Cart{
+    cartID         Int     @id @default(autoincrement())
+    userID         Int     
+    createdAt      DateTime @default(now())
+
+    user User @relation(fields: [userID], references: [userID])
+    details CartDetail[]
+}
+
+model CartDetail {
+    cartDetailID    Int     @id @default(autoincrement())
+    cartID          Int
+    productID       Int
+    quantity        Int
+    price           Decimal @db.Decimal(10, 2)
+
+    cart            Cart @relation(fields: [cartID], references: [cartID])
+    product         Product @relation(fields: [productID], references: [productID])
+
+    @@unique([cartID, productID])
+}
+
+model Orders {
+    orderID         Int     @id @default(autoincrement())
+    userID          Int
+    totalPrice      Decimal @db.Decimal(10, 2)
+    orderStatus     String @default("pending")
+    orderDate       DateTime @default(now())
+
+    user            User @relation(fields: [userID], references: [userID])
+    details         OrderDetail[]
+    payment         Payment?
+}
+
+model OrderDetail {
+    detailID   Int     @id @default(autoincrement())
+    orderID         Int
+    productID       Int
+    quantity        Int
+    price           Decimal @db.Decimal(10, 2)
+
+    order           Orders @relation(fields: [orderID], references: [orderID])
+    product         Product @relation(fields: [productID], references: [productID])
+}
+
+model Payment {
+    paymentID       Int     @id @default(autoincrement())
+    orderID         Int     @unique
+    paymentMethod   String
+    paymentStatus   String @default("pending")
+    paymentDate     DateTime @default(now())
+
+    order           Orders @relation(fields: [orderID], references: [orderID])
+}
+
+model Admin {
+    adminID         Int     @id @default(autoincrement())
+    userID          Int     @unique
+    createdAt       DateTime @default(now())
+
+    user            User @relation(fields: [userID], references: [userID])
+}
+
+model Notification {
+    notificationID  Int     @id @default(autoincrement())
+    userID          Int
+    title           String
+    message         String  @db.Text
+    isRead          Boolean @default(false)
+    createdAt       DateTime @default(now())
+
+    user            User @relation(fields: [userID], references: [userID])
+}
+
+model Review {
+    reviewID        Int     @id @default(autoincrement())
+    userID          Int
+    productID       Int
+    rating          Int
+    comment         String? @db.Text
+    createdAt       DateTime @default(now())
+
+    user            User @relation(fields: [userID], references: [userID])
+    product         Product @relation(fields: [productID], references: [productID])
+
+    @@unique([userID, productID])
+}
